@@ -1,0 +1,55 @@
+clc;clear;
+close all;
+addpath(genpath('D:\paper\IR and Vis\实验\试验5\MCET-HHO'));
+addpath(genpath('D:\paper\IR and Vis\实验\试验5\BLF_LS'));
+pathir='Road_IR.jpg';
+pathvis='Road_Vis.jpg';
+imgIR=imread(pathir);
+imgVIS=imread(pathvis);
+%%%预处理
+imgIR=uint8(blf_ls_enhance(imgIR)*255);
+imgVIS=uint8(blf_ls_enhance(imgVIS)*255);
+%%%ir图像分割
+seg=MCET_HHO(imgIR);
+seg=double(seg);
+a=max(max(double(uint8(imgIR))));
+imgvis_weight=(a-seg);
+imgvis_weight=wlsFilter(imgvis_weight);
+imgir_weight=wlsFilter(seg);
+%%%detail weight
+imgvis_weight=imgvis_weight./(imgvis_weight+imgir_weight+eps);
+imgir_weight=1-imgvis_weight;
+
+%%%亮度层提取
+imgIR=im2double(imgIR);
+imgVIS=im2double(imgVIS);
+N=3;
+Med1= medfilt2(imgIR, [N N]);
+M=35;
+h=1/(M*M)*ones(M);
+b1=imfilter(double(imgIR),double(h),'circular');
+S1=(b1-double(Med1)).^2;
+Med2= medfilt2(imgVIS, [N N]);
+b2=imfilter(double(imgVIS),double(h),'circular');
+S2=(b2-double(Med2)).^2;
+S1=blf_ls_smooth(S1,imgIR);
+S2=blf_ls_smooth(S2,imgVIS);
+S1=mat2gray(S1).*imgIR;
+S2=mat2gray(S2).*imgVIS;
+S=(S1+S2);
+
+
+%%%显著性权重
+b1=blf_ls_smooth(imgIR);
+b2=blf_ls_smooth(imgVIS);
+fusion_base=(b1+b2)/2;
+imgir_detail=imgIR-b1;
+imgvis_detail=imgVIS-b2;
+
+fusion_detail=imgir_weight.*imgir_detail+imgvis_detail.*imgvis_weight;
+fusion=fusion_detail+fusion_base+S;
+figure,imshow(fusion);
+
+
+
+
