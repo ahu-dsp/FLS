@@ -1,0 +1,34 @@
+%% image detail enhancement
+sigma_s = 12;
+sigma_r = 0.04;
+
+Img = imread("Road_IR.jpg");
+Img = im2double(Img);  % Image should be normalized into [0, 1]
+
+S = BLF_LS1(Img, Img, sigma_s, sigma_r);
+ImgE = Img + (Img - S);
+
+figure
+% imshow([Img, ImgE])
+% imwrite(ImgE,'Road_Vis_enhance.jpg');
+%% flash/no flash filtering
+sigma_s = 16;
+sigma_r = 0.05;
+
+Img = imread("seg_road4.jpg");
+Img = im2double(Img);  % Image should be normalized into [0, 1]
+Guide = imread("seg_road.jpg");
+Guide = im2double(Guide);
+
+S = BLF_LS1(Img, Guide, sigma_s, sigma_r);
+img=Img-S;
+%%%¾ùÖµÂË²¨
+M=35;
+h=1/(M*M)*ones(M);
+b1=imfilter(double(Img),double(h),'circular');
+img1=Img-b1;
+figure,imshow([img1,b1]);
+
+
+figure
+imshow([img, S])
